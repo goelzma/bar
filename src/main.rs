@@ -4,6 +4,7 @@ use std::thread;
 fn main() {
     loop {
         let now = Local::now();
+        // Year Month Day (Week of year - Day of week) Hour Minute Second
         println!("{}", now.format("%Y-%m-%d (%W-%w) %H:%M:%S"));
 
         let sleep_duration = chrono::Duration::seconds(60)
