@@ -1,5 +1,4 @@
 use chrono::{Timelike, Local};
-use std::time::Duration;
 use libc::{clock_nanosleep, CLOCK_REALTIME, TIMER_ABSTIME};
 
 fn main() {
@@ -10,9 +9,7 @@ fn main() {
 
         // Calculate the target time: beginning of the next minute
         let mut next_minute = now.with_second(0).unwrap().with_nanosecond(0).unwrap();
-        if next_minute <= now {
-            next_minute = next_minute + chrono::Duration::minutes(1);
-        }
+        next_minute = next_minute + chrono::Duration::minutes(1);
 
         // Convert the target time to a timespec struct for clock_nanosleep
         let target_timestamp_secs = next_minute.timestamp();
