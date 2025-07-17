@@ -1,5 +1,6 @@
-use chrono::{Timelike, Local};
-use libc::{clock_nanosleep, CLOCK_REALTIME, TIMER_ABSTIME};
+use chrono::{Local, Timelike};
+use nix::time::{ClockId, ClockNanosleepFlags, clock_nanosleep};
+use nix::sys::time::TimeSpec;
 
 fn main() {
     loop {
@@ -12,30 +13,18 @@ fn main() {
         let next_minute = start_of_minute + chrono::Duration::minutes(1);
 
         // Convert the target time to a timespec struct for clock_nanosleep
-        let target_timestamp_secs = next_minute.timestamp();
-        // TODO: Always zero? Or perhaps not because of hypothetical utc offset
-        // which is not an integral number of seconds?
-        let target_timestamp_nanos = next_minute.nanosecond();
-
-        let ts = libc::timespec {
-            tv_sec: target_timestamp_secs,
-            tv_nsec: target_timestamp_nanos as libc::c_long,
-        };
+        let ts = TimeSpec::new(
+            next_minute.timestamp(),
+            // TODO: Always zero? Or perhaps not because of hypothetical utc offset which is not an integral number of seconds?
+            next_minute.nanosecond() as i64,
+        );
 
         // Call clock_nanosleep with CLOCK_REALTIME and TIMER_ABSTIME
         // This will block the thread until the specified wall-clock time
-        let res = unsafe {
-            clock_nanosleep(
-                CLOCK_REALTIME,
-                TIMER_ABSTIME,
-                &ts,
-                std::ptr::null_mut(), // No remainder on early wakeup
-            )
-        };
-
-        if res != 0 {
-            let err = std::io::Error::from_raw_os_error(res);
-            panic!("clock_nanosleep failed: {}", err);
-        }
+        clock_nanosleep(
+            ClockId::CLOCK_REALTIME,
+            ClockNanosleepFlags::TIMER_ABSTIME,
+            &ts,
+        ).expect("Error from clock_nanosleep");
     }
 }
