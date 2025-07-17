@@ -8,11 +8,13 @@ fn main() {
         println!("{}", now.format("%Y-%m-%d (%W-%w) %H:%M"));
 
         // Calculate the target time: beginning of the next minute
-        let mut next_minute = now.with_second(0).unwrap().with_nanosecond(0).unwrap();
-        next_minute = next_minute + chrono::Duration::minutes(1);
+        let start_of_minute = now.with_second(0).unwrap().with_nanosecond(0).unwrap();
+        let next_minute = start_of_minute + chrono::Duration::minutes(1);
 
         // Convert the target time to a timespec struct for clock_nanosleep
         let target_timestamp_secs = next_minute.timestamp();
+        // TODO: Always zero? Or perhaps not because of hypothetical utc offset
+        // which is not an integral number of seconds?
         let target_timestamp_nanos = next_minute.nanosecond();
 
         let ts = libc::timespec {
@@ -27,7 +29,7 @@ fn main() {
                 CLOCK_REALTIME,
                 TIMER_ABSTIME,
                 &ts,
-                std::ptr::null_mut(), // No remainder
+                std::ptr::null_mut(), // No remainder on early wakeup
             )
         };
 
